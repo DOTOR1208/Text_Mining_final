@@ -1,10 +1,12 @@
 import requests
 import csv
 import json
-
+from langdetect import detect
+from langdetect.lang_detect_exception import LangDetectException
 post_urls = [
     'https://www.tiktok.com/@learnenglishonline_6/video/7433779167948197152',
-    'https://www.tiktok.com/@evolvedata22/video/7250355072511626539'
+    'https://www.tiktok.com/@evolvedata22/video/7250355072511626539',
+    'https://www.tiktok.com/@mrbeast/video/7452741134217923886'
 ]
 
 output_file = 'Tiktok_Comments.csv'
@@ -42,7 +44,13 @@ def parser(data):
     for cm in data.get('comments', []):
         com = cm['text'] if cm['text'] else cm['share_info']['desc'] if cm['share_info']['desc'] else ''
         if com:
-            comments.append([com, '', 'Tiktok'])
+            try:
+                # Phát hiện ngôn ngữ và chỉ lấy bình luận tiếng Anh
+                if detect(com) == 'en':
+                    comments.append([com, '', 'Tiktok'])
+            except LangDetectException:
+                # Bỏ qua nếu không phát hiện được ngôn ngữ
+                pass
     return comments
 
 def save_to_csv(comments, writer, post_id):
@@ -71,7 +79,7 @@ with open(output_file, mode='w', encoding='utf-8', newline='') as file:
             # Cập nhật cursor từ API
             if raw_data.get('has_more') == 1:
                 cursor = raw_data.get('cursor', cursor + 100)  # Lấy giá trị 'cursor' mới từ API
-                #print(f"Moving to next cursor: {cursor}")
+                print(f"Moving to next cursor: {cursor}")
             else:
                 #print('No more comments available.')
                 break
