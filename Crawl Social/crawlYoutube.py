@@ -8,7 +8,7 @@ from langdetect import detect
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # YouTube Data API Key
-api_key = "AIzaSyBjc2O3WUnNrbcml1y2FGM16DXM2bgO4BM"
+api_key = "your_api_key"
 
 # Fixed list of video IDs
 video_ids = [

@@ -3,8 +3,8 @@ import csv
 from langdetect import detect
 
 # Create a Reddit API instance
-reddit = praw.Reddit(client_id='xCu8xpeOujIeVCCfvg2DkA',
-                     client_secret='denHubERM4nAOM1jtj9K2qmbMS_fKQ',
+reddit = praw.Reddit(client_id='your_id',
+                     client_secret='your_secret',
                      user_agent='thuong (by /u/SquirrelPlus4874)')
 
 # List of Reddit post URLs (replace these with your actual URLs)
