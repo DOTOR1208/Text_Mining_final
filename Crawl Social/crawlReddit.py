@@ -1,10 +1,14 @@
 import praw
 import csv
 from langdetect import detect
+from transformers import pipeline
+
+# Initialize sentiment analysis pipeline from Hugging Face
+sentiment_analyzer = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
 
 # Create a Reddit API instance
-reddit = praw.Reddit(client_id='your_id',
-                     client_secret='your_secret',
+reddit = praw.Reddit(client_id='your_client_id',
+                     client_secret='your_client_secret',
                      user_agent='thuong (by /u/SquirrelPlus4874)')
 
 # List of Reddit post URLs (replace these with your actual URLs)
@@ -57,8 +61,8 @@ with open('Reddit_Comments.csv', mode='w', newline='', encoding='utf-8') as file
             # Language detection and sentiment analysis
             try:
                 if detect(comment.body) == 'en':
-                    # Sentiment analysis with TextBlob
-                    writer.writerow([comment.body, '', 'Reddit'])
+                    sentiment_result = sentiment_analyzer(comment.body[:512])[0]  # Truncate to 512 tokens
+                    writer.writerow([comment.body, sentiment_result['label'], 'Reddit'])
                     comment_count += 1
             except Exception as e:
                 print(f"Error processing comment: {e}")
