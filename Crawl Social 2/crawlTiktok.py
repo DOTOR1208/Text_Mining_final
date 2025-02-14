@@ -1,8 +1,11 @@
 import requests
 import csv
 import json
+import re
+import emoji
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
+
 post_urls = [
     'https://www.tiktok.com/@learnenglishonline_6/video/7433779167948197152',
     'https://www.tiktok.com/@evolvedata22/video/7250355072511626539',
@@ -39,18 +42,27 @@ def req(post_id, cursor):
         print(f"Error: Invalid response (Status Code: {response.status_code})")
         return None
 
+def remove_emoji(text):
+    """Loại bỏ emoji khỏi văn bản"""
+    text = emoji.replace_emoji(text, replace="")  # Thay emoji bằng chuỗi rỗng
+    text = re.sub(r'[^\w\s,!?\'\".-]', '', text)  # Xóa ký tự đặc biệt không mong muốn
+    return text.strip()
+
 def parser(data):
+    unique_comments = set()  # Dùng set để tránh trùng lặp
     comments = []
+
     for cm in data.get('comments', []):
         com = cm['text'] if cm['text'] else cm['share_info']['desc'] if cm['share_info']['desc'] else ''
         if com:
             try:
-                # Phát hiện ngôn ngữ và chỉ lấy bình luận tiếng Anh
-                if detect(com) == 'en':
+                com = remove_emoji(com)  # Xóa emoji
+                com = com.strip()  # Xóa khoảng trắng đầu/cuối
+                if len(com) >= 10 and detect(com) == 'en' and com not in unique_comments:  # Lọc theo độ dài + tiếng Anh + không trùng
+                    unique_comments.add(com)
                     comments.append([com, '', 'Tiktok'])
             except LangDetectException:
-                # Bỏ qua nếu không phát hiện được ngôn ngữ
-                pass
+                pass  # Bỏ qua nếu không phát hiện được ngôn ngữ
     return comments
 
 def save_to_csv(comments, writer, post_id):
@@ -76,12 +88,10 @@ with open(output_file, mode='w', encoding='utf-8', newline='') as file:
             
             comments += parser(raw_data)
 
-            # Cập nhật cursor từ API
             if raw_data.get('has_more') == 1:
-                cursor = raw_data.get('cursor', cursor + 100)  # Lấy giá trị 'cursor' mới từ API
+                cursor = raw_data.get('cursor', cursor + 100)
                 print(f"Moving to next cursor: {cursor}")
             else:
-                #print('No more comments available.')
                 break
         
         save_to_csv(comments, writer, post_id)
