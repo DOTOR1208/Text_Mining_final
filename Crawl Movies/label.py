@@ -1,29 +1,29 @@
 import pandas as pd
-from nltk.sentiment import SentimentIntensityAnalyzer
-import nltk
+import torch
+from transformers import pipeline
 
-# Download package (run once then command)
-# nltk.download('vader_lexicon')
+device = 0 if torch.cuda.is_available() else -1
 
-data = pd.read_csv("crawl_movies.csv")  # Ensure the file contains columns: movie_id, author, content, url, source
+# Load sentiment Hugging Face
+sentiment_model = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", device=device)
 
-# Initialize the VADER sentiment analyzer
-sia = SentimentIntensityAnalyzer()
+data = pd.read_csv("crawl_movies.csv")
 
-def get_sentiment(text):
-    score = sia.polarity_scores(str(text))["compound"]  # Convert to string to avoid NaN errors
-    if score >= 0.7:
-        return "Super Positive"
-    elif score >= 0.05:
-        return "Positive"
-    elif score > -0.7:
-        return "Negative"
+def classify_sentiment(text):
+    text = str(text)[:512]  
+    result = sentiment_model(text)[0]
+    
+    score = result["score"]
+    label = result["label"]
+
+    if label == "POSITIVE":
+        return "Super Positive" if score > 0.95 else "Positive"
     else:
-        return "Super Negative"
+        return "Super Negative" if score > 0.95 else "Negative"
 
-# Apply sentiment analysis
-data["sentiment"] = data["content"].apply(get_sentiment)
+# Sentiment of "content"
+data["sentiment"] = data["content"].apply(classify_sentiment)
 
-data.to_csv("labeled_reviews.csv", index=False)
+data.to_csv("labeled_reviews_hugging.csv", index=False)
 
-print("Sentiment labeling completed with 4 levels using VADER!")
+print("Hoàn tất gán nhãn sentiment bằng DistilBERT!")
