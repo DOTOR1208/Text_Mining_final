@@ -3,12 +3,16 @@ from googleapiclient.errors import HttpError
 import csv
 import logging
 from langdetect import detect
+from transformers import pipeline
+
+# Initialize sentiment analysis pipeline from Hugging Face
+sentiment_analyzer = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # YouTube Data API Key
-api_key = "AIzaSyBjc2O3WUnNrbcml1y2FGM16DXM2bgO4BM"
+api_key = "your_api_key"
 
 # Fixed list of video IDs
 video_ids = [
@@ -17,6 +21,7 @@ video_ids = [
     "p9Q5a1Vn-Hk",
     "62wEk02YKs0",
     "eEWa7cpiyD8",
+    '1BVJzaXv3rk',
 ]
 
 output_file = "Youtube_Comments.csv"
@@ -69,9 +74,10 @@ for vid_id in video_ids:
             try:
                 # Detect language of the comment
                 if detect(comment_text) == 'en':  # Check if comment is in English
+                    sentiment_result = sentiment_analyzer(comment_text[:512])[0]  # Truncate to 512 tokens
                     comments.append([
                         comment_text,   # Comment text
-                        "",             # Blank sentiment
+                        sentiment_result['label'], # Sentiment label (POSITIVE/NEGATIVE)
                         "Youtube"       # Default source
                     ])
                     total_fetched += 1
