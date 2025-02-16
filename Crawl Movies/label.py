@@ -7,7 +7,7 @@ device = 0 if torch.cuda.is_available() else -1
 # Load sentiment Hugging Face
 sentiment_model = pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english", device=device)
 
-data = pd.read_csv("merged.csv")
+data = pd.read_csv("crawl_movies.csv")
 
 def classify_sentiment(text):
     text = str(text)[:512]  
