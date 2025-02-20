@@ -5,6 +5,10 @@ import re
 import emoji
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
+from transformers import pipeline
+
+# Khởi tạo mô hình phân tích cảm xúc
+sentiment_analyzer = pipeline("sentiment-analysis")
 
 post_urls = [
     'https://www.tiktok.com/@learnenglishonline_6/video/7433779167948197152',
@@ -12,7 +16,7 @@ post_urls = [
     'https://www.tiktok.com/@mrbeast/video/7452741134217923886'
 ]
 
-output_file = 'Tiktok_Comments.csv'
+output_file = 'Tiktok_Comments_Sentiment.csv'
 
 headers = {
     'accept': '*/*',
@@ -48,6 +52,12 @@ def remove_emoji(text):
     text = re.sub(r'[^\w\s,!?\'\".-]', '', text)  # Xóa ký tự đặc biệt không mong muốn
     return text.strip()
 
+def analyze_sentiment(comment):
+    """Phân tích cảm xúc của bình luận"""
+    result = sentiment_analyzer(comment)
+    label = result[0]['label']
+    return 'positive' if label == 'POSITIVE' else 'negative'
+
 def parser(data):
     unique_comments = set()  # Dùng set để tránh trùng lặp
     comments = []
@@ -59,8 +69,9 @@ def parser(data):
                 com = remove_emoji(com)  # Xóa emoji
                 com = com.strip()  # Xóa khoảng trắng đầu/cuối
                 if len(com) >= 10 and detect(com) == 'en' and com not in unique_comments:  # Lọc theo độ dài + tiếng Anh + không trùng
+                    sentiment = analyze_sentiment(com)  # Phân tích cảm xúc
                     unique_comments.add(com)
-                    comments.append([com, '', 'Tiktok'])
+                    comments.append([com, sentiment, 'Tiktok'])
             except LangDetectException:
                 pass  # Bỏ qua nếu không phát hiện được ngôn ngữ
     return comments
