@@ -16,7 +16,7 @@ post_urls = [
     'https://www.tiktok.com/@mrbeast/video/7452741134217923886'
 ]
 
-output_file = 'Tiktok_Comments_Sentiment.csv'
+output_file = 'Tiktok_Comments.csv'
 
 headers = {
     'accept': '*/*',
