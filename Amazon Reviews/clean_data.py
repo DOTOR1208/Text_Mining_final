@@ -8,11 +8,11 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import TweetTokenizer
 from time import time
 
-# Tải dữ liệu cần thiết từ NLTK (chỉ cần chạy 1 lần nếu chưa tải)
-##nltk.download('stopwords')
-##nltk.download('wordnet')
-##nltk.download('omw-1.4')
-##nltk.download('punkt')
+# Tải dữ liệu cần thiết từ NLTK (nếu chưa có)
+## nltk.download('stopwords')
+## nltk.download('wordnet')
+## nltk.download('omw-1.4')
+## nltk.download('punkt')
 
 stop_words = set(stopwords.words('english'))
 important_words = {"not", "no", "only", "over"}  # Giữ lại các từ quan trọng
@@ -44,15 +44,29 @@ def clean_text(review):
     tokens = [lemmatizer.lemmatize(word) for word in tokens]  # Lemmatization
     return ' '.join(tokens)
 
-# Đọc dữ liệu
-input_file = "data_1_13.csv"
-output_file = "clean_data_1_13.csv"
+# Danh sách các file cần xử lý
+files = ["train.csv", "test.csv", "validation.csv"]
 
-if not os.path.exists(input_file):
-    print(f"❌ Error: File '{input_file}' not found!")
-else:
+for file in files:
+    if not os.path.exists(file):
+        print(f"❌ Error: File '{file}' not found!")
+        continue  # Bỏ qua file không tồn tại
+
     start_time = time()
-    df = pd.read_csv(input_file, header=None, names=["ID", "Review", "Rating"])
-    df["Review"] = df["Review"].astype(str).swifter.apply(clean_text)  # Dùng swifter để tăng tốc
-    df.to_csv(output_file, index=False, header=False)
-    print(f"✅ Done! File cleaned and saved to {output_file} in {time() - start_time:.2f} seconds.")
+    print(f"🔄 Processing '{file}'...")
+
+    # Đọc file
+    df = pd.read_csv(file)
+
+    # Kiểm tra nếu có cột 'Review'
+    if "reviews" not in df.columns:
+        print(f"⚠ Warning: 'reviews' column not found in '{file}', skipping...")
+        continue
+
+    # Làm sạch dữ liệu
+    df["reviews"] = df["reviews"].astype(str).swifter.apply(clean_text)
+
+    # Đổi tên file đầu ra thành dạng "train_clean.csv", "test_clean.csv", "validation_clean.csv"
+    output_file = file.replace(".csv", "_clean.csv")
+    df.to_csv(output_file, index=False)
+    print(f"✅ Done! File cleaned and saved to '{output_file}' in {time() - start_time:.2f} seconds.")
